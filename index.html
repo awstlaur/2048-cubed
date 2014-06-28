@@ -1,0 +1,479 @@
+<html> 
+    <head> 
+        <title>2048 Cubed</title> 
+        <meta charset="utf-8">
+        <style>
+        canvas { width: 100%; height: 100% }
+        #infoButton {
+        position  : absolute;
+        top   : 10px;
+        left    : 10px;
+        z-index   : 2;
+
+        font-style  : italic;
+        font-size : 180%;
+        color   : black;
+
+        /*background  : rgba(0,0,0,0.5); */
+        background: #cdc0b4;
+
+        padding   : 15px;
+        padding-top : 5px;
+        padding-bottom  : 5px;
+        
+
+        border-radius : 1000px;
+        /*border-color  : #BDBDBD; */
+        border-color: #424242;
+        border-style  : solid;
+        border-width  : 2px;  
+      }
+      #infoButton:hover {
+        cursor: pointer;
+      }
+      #animateButtonOn {
+        position  : absolute;
+        top   : 10px;
+        left    : 80px;
+        z-index   : 2;
+
+        font-style  : italic;
+        font-size : 180%;
+        color   : black;
+
+        /*background  : rgba(0,0,0,0.5); */
+        background: #cdc0b4;
+
+        padding   : 15px;
+        padding-top : 5px;
+        padding-bottom  : 5px;
+        
+
+        border-radius : 1000px;
+        /*border-color  : #BDBDBD; */
+        border-color: #424242;
+        border-style  : solid;
+        border-width  : 2px;  
+      }
+      #animateButtonOn:hover {
+        cursor: pointer;
+      }
+      #animateButtonOff {
+        position  : absolute;
+        top   : 10px;
+        left    : 80px;
+        z-index   : 2;
+
+        font-style  : italic;
+        font-size : 180%;
+        color   : grey;
+
+        /*background  : rgba(0,0,0,0.5); */
+        background: #cdc0b4;
+
+        padding   : 15px;
+        padding-top : 5px;
+        padding-bottom  : 5px;
+        
+
+        border-radius : 1000px;
+        /*border-color  : #BDBDBD; */
+        border-color: grey;
+        border-style  : solid;
+        border-width  : 2px;  
+      }      
+      #animateButtonOff:hover {
+        cursor: pointer;
+      }
+        #infoPopup {
+        position  : absolute;
+        top   : 80px;
+        left    : 10px;
+        z-index   : 2;
+        
+        font-size : 100%;
+        width: 30%;
+
+        /*color   : #BDBDBD;*/
+        color: black;
+
+        /*background  : rgba(0,0,0,0.5);*/
+        background: #cdc0b4;
+
+        padding   : 15px;
+        padding-top : 5px;
+        padding-bottom  : 5px;
+
+
+        border-radius : 10px;
+        border-color  : black;
+        border-style  : solid;
+        border-width  : 2px;  
+      }
+      #infoPopup a {
+        color   : blue; /*#8888ff;  */
+      }
+      
+        </style>
+        
+            
+    </head> 
+    <body>
+    <style>
+        
+    </style>
+    
+    <div id='infoButton'>?</div>
+    <div id='animateButtonOff'>A</div>
+    <div id='animateButtonOn' style='display: none;'>A</div>
+
+    <div id='infoPopup' style='display: none;'>
+      <b>Arrow keys</b>: move cubes up, down, left, and right.<br>
+      <b>F, V</b>: move cubes away from you, toward you.<br>
+      <b>1,2,3</b>: hold a number key to isolate the view to one layer for easier viewing.<br>
+      <b>Click & drag</b>, use <b>scroll wheel</b>: rotate the grid, zoom. 
+      <br><br>
+      When two cubes with the same number collide, they merge into one cube with double that number!
+      The goal is to get a cube whose number is 2048 (or, however high you can).
+      Adapted from <a href="http://gabrielecirulli.github.io/2048/">http://gabrielecirulli.github.io/2048/</a>
+      <br><br>
+      Click the <b>A</b> icon to toggle animation of game pieces. Note - this feature is still a work in progress,
+      and more optimizations will be made in the future.
+      <br><br>
+      Click the <b>?</b> icon to close this message.
+    </div>
+    
+        <script src="js/three.min.js"></script>
+        <script src="js/EdgesHelper.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/MyText.js"></script>
+        <script src="js/Constant.js"></script>
+        <script src="js/threex.keyboardstate.js"></script>
+        <script src="js/helvetiker_font/helvetiker_regular.typeface.js"></script>
+                      
+        <script src="js/grid.js"></script>
+        <script src="js/tile.js"></script>
+        <script src="js/game_manager.js"></script>
+        
+
+
+        <script>
+        
+        //setup 
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(Constant.fov, width/height, Constant.nearPlane, Constant.farPlane);        
+        var renderer = new THREE.WebGLRenderer();
+        
+        var animateEver = false;
+        
+        //scene.add(camera);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(Constant.backgroundColor, Constant.fullOpacity);
+        document.body.appendChild(renderer.domElement);
+        
+        camera.position.set(Constant.initCam.x,Constant.initCam.y,Constant.initCam.z);
+        controls = new THREE.OrbitControls(camera);
+        
+        
+        var side = Constant.cubeSize; //size of cube in grid
+        var size = Constant.gridSize; //game size               
+        var game = new GameManager(size, scene);
+        
+        //center sphere - yay frame of reference!
+        var geometry = new THREE.SphereGeometry( Constant.sphereRadius,Constant.sphereSegments,Constant.sphereSegments);      
+        var material = new THREE.MeshBasicMaterial( {color: Constant.sphereColor} ); 
+        var sphere = new THREE.Mesh( geometry, material );       
+        //scene.add( sphere );
+        var middle = side;        
+        sphere.position.set(middle,middle,middle);
+        
+        controls.center.set(middle,middle,middle);
+        
+        
+        var keyboard = new THREEx.KeyboardState();
+      
+       
+        document.querySelector('#infoButton').addEventListener('click', function(event){
+          var element = document.querySelector('#infoPopup');
+          //console.log('display', element.style.display)
+          element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        });
+        document.querySelector('#animateButtonOff').addEventListener('click', function(event){
+          var element = document.querySelector('#animateButtonOn');
+           element.style.display = 'block';//element.style.display === 'none' ? 'block' : 'none';
+           animateEver = true;
+           console.log(true);
+        });
+        document.querySelector('#animateButtonOn').addEventListener('click', function(event){
+          var element = document.querySelector('#animateButtonOn');
+           element.style.display = 'none';//element.style.display === 'none' ? 'block' : 'none';
+           animateEver = false;           
+        });
+      
+      //I stole the keydown/keyup code from something...
+	    var wasPressed	= {};
+        keyboard.domElement.addEventListener('keydown', function(event){
+            var modified = false;
+            if( keyboard.eventMatches(event, '1') && !wasPressed['1'] ){
+                wasPressed['1'] = true;               
+                if(!modified){
+                    modified = true;
+                    game.zLayerShow[0] = true;
+                    game.zLayerShow[1] = false;
+                    game.zLayerShow[2] = false;
+                    game.zLayerShow[3] = false;                    
+                }
+                
+            }
+            if( keyboard.eventMatches(event, '2') && !wasPressed['2']){
+                wasPressed['2'] = true;
+                if(!modified){
+                    modified = true;
+                    game.zLayerShow[0] = false;
+                    game.zLayerShow[1] = true;
+                    game.zLayerShow[2] = false;
+                    game.zLayerShow[3] = false;
+                }
+            }
+            if( keyboard.eventMatches(event, '3') && !wasPressed['3'] ){
+                wasPressed['3'] = true;
+                if(!modified){
+                    modified = true;
+                    game.zLayerShow[0] = false;
+                    game.zLayerShow[1] = false;
+                    game.zLayerShow[2] = true;
+                    game.zLayerShow[3] = false;
+                }
+            }
+
+            if( keyboard.eventMatches(event, 'up') && !wasPressed['up']){
+              wasPressed['up'] = true;
+              move(0);
+            }
+            if( keyboard.eventMatches(event, 'right') && !wasPressed['right']){             
+              wasPressed['right'] = true;
+              move(1);
+            }
+            if( keyboard.eventMatches(event, 'down') && !wasPressed['down']){
+              wasPressed['down'] = true;
+              move(2);
+            }
+            if( keyboard.eventMatches(event, 'left') && !wasPressed['left']){
+              wasPressed['left'] = true;
+              move(3);
+            }
+            if( keyboard.eventMatches(event, 'v') && !wasPressed['v']){
+              wasPressed['v'] = true;
+              move(4);
+            }
+            if( keyboard.eventMatches(event, 'f') && !wasPressed['f']){
+              wasPressed['f'] = true;
+              move(5);
+            }
+
+            if(modified){
+                //console.log("if modified");
+                game.updateGameVisibility();
+                modified = false;
+            }
+        })	
+        
+        // listen on keyup to maintain ```wasPressed``` array
+        keyboard.domElement.addEventListener('keyup', function(event){
+            var restore = false;
+            if( keyboard.eventMatches(event, '1') ){
+                wasPressed['1']	= false;
+                restore = true;
+            }
+            if( keyboard.eventMatches(event, '2') ){
+                wasPressed['2']	= false;
+                restore = true;
+            }
+            if( keyboard.eventMatches(event, '3') ){
+                wasPressed['3']	= false;
+                restore = true;
+            }
+            if( keyboard.eventMatches(event, 'up') ){
+                wasPressed['up'] = false;
+            }
+            if( keyboard.eventMatches(event, 'right') ){
+                wasPressed['right'] = false;
+            }
+            if( keyboard.eventMatches(event, 'down') ){
+                wasPressed['down'] = false;
+            }
+            if( keyboard.eventMatches(event, 'left') ){
+                wasPressed['left'] = false;
+            }
+            if( keyboard.eventMatches(event, 'v') ){
+                wasPressed['v'] = false;
+            }
+            if( keyboard.eventMatches(event, 'f') ){
+                wasPressed['f'] = false;
+            }
+            if(restore){
+                game.zLayerShow[0] = true;
+                game.zLayerShow[1] = true;
+                game.zLayerShow[2] = true;
+                game.zLayerShow[3] = true;
+                //console.log("if restore");
+                game.updateGameVisibility();
+            }
+        })        
+        
+        function focusZLayer(zValue){
+            if (zValue < 0 || zValue >= size) return;
+                    for (var z = 0; z < size; z++){ 
+                        if(z !== zValue){
+                            game.zLayerShow[z] = 0;
+                        }
+                        if(z === zValue){
+                            game.zLayerShow[z] = 1;
+                        }
+                    }
+        }
+        
+        var clock;  // Keeps track of elapsed time of animation.
+                    // clock.getElapsedTime() gives the time, in seconds, that the
+                    // animation has been running, not including time when it was
+                    // paused.  clock.getFrameNumber() gives the current frame number,
+                    // that is, the number of times the scene has been rendered.
+
+        //var animating = false;
+        
+        function move(direction){
+          game.move(direction);
+          //ANIMATION TIME!
+          //console.log(game.grid.tilePointers.length);
+          if(animateEver){
+            setTimeout(function(){game.actuate()},Constant.actuateTimeout);          
+            startAnimation();
+          }else{
+            game.actuate();
+            }
+         
+          //console.log("returned here!");
+          
+          
+        }
+                    
+        
+        function render() { 
+            requestAnimationFrame(render);         
+            renderer.render(scene, camera); 
+            controls.update();
+        }
+        
+        /*
+         * all the animation framework came from:
+         *http://math.hws.edu/eck/cs424/notes2013/15_Threejs_Intro.html
+         */
+        function updateForFrame() {  // called by animation support
+          /*
+           * var frameNum = clock.getFrameNumber(); */
+          var runTime = clock.getElapsedTime();
+          console.log(runTime);
+          // ... ADD CODE TO UPDATE SCENE FOR THE CURRENT FRAME ...
+
+          //console.log("frame");
+          //elapsed in [0,1]
+          var elapsed = (runTime/Constant.duration)*1000;
+          elapsed = (elapsed >= 1) ? 1 : elapsed;
+          
+          //console.log("frame");
+          if(elapsed === 1){
+            stopAnimation();
+            return false;
+          } else {
+
+            value = elapsed;//Constant.easingFunction( elapsed );
+            //console.log(value);
+            
+            
+            for(var i=game.grid.tilePointers.length-1; i>=0; i--){ 
+              
+              var tile = game.grid.tilePointers[i];
+              if(tile.mergedFrom){
+                var newPos = {x:0,y:0,z:0}; 
+                //console.log(tile.mergedFrom[0])
+                var I = tile.mergedFrom[0].previousRenderPosition;
+                //var I = game.grid.gameToRenderCoordinates(tile.mergedFrom[0].previousPosition);
+                var F = tile.renderPosition;//
+                //var F = game.grid.gameToRenderCoordinates({x:tile.x,y:tile.y,z:tile.z});
+                newPos.x = I.x+value*(F.x-I.x);//Constant.interpolationFunction(I.x,F.x,value);
+                newPos.y = I.y+value*(F.y-I.y);//Constant.interpolationFunction(I.y,F.y,value);
+                newPos.z = I.z+value*(F.z-I.z)//Constant.interpolationFunction(I.z,F.z,value);
+                tile.mergedFrom[0].renderCube.position = newPos;
+                tile.mergedFrom[0].renderText.position = newPos;
+                
+                var newPos = {x:0,y:0,z:0};
+                var I = tile.mergedFrom[1].previousRenderPosition;//game.grid.gameToRenderCoordinates(tile.mergedFrom[1].previousPosition);
+                //var F = tile.renderPosition;//
+                //var F = game.grid.gameToRenderCoordinates({x:tile.x,y:tile.y,z:tile.z});
+                newPos.x = I.x+value*(F.x-I.x);//Constant.interpolationFunction(I.x,F.x,value);
+                newPos.y = I.y+value*(F.y-I.y);//Constant.interpolationFunction(I.y,F.y,value);
+                newPos.z = I.z+value*(F.z-I.z)//Constant.interpolationFunction(I.z,F.z,value);
+                tile.mergedFrom[1].renderCube.position = newPos;
+                tile.mergedFrom[1].renderText.position = newPos;
+              }else{
+                //console.log(tile);
+                var newPos = {x:0,y:0,z:0}; 
+                var I = tile.previousRenderPosition;//game.grid.gameToRenderCoordinates(tile.previousPosition);
+                var F = tile.renderPosition;//game.grid.gameToRenderCoordinates({x:tile.x,y:tile.y,z:tile.z});
+                newPos.x = I.x+value*(F.x-I.x);//Constant.interpolationFunction(I.x,F.x,value);
+                newPos.y = I.y+value*(F.y-I.y);//Constant.interpolationFunction(I.y,F.y,value);
+                newPos.z = I.z+value*(F.z-I.z)//Constant.interpolationFunction(I.z,F.z,value); 
+                //tile.updateRenderPosition(newPos); <- ABSOLUTELY NOT
+                tile.renderCube.position = newPos;
+                tile.renderText.position = newPos;
+              }
+              
+              }
+            
+            }
+          return true;
+          }
+
+        //------------------ animation support, does not need to be changed ---------
+
+        
+
+        function doFrame() {  
+            //if (animating) {
+                
+                //clock.frameNumber++;
+                var go = updateForFrame();
+                render();
+                if(go) requestAnimationFrame(doFrame);
+            //}
+        }
+
+        function startAnimation() {
+            //if (!animating) {
+                if (!clock) {
+                    clock = new THREE.Clock(false);
+                    //clock.frameNumber = 0;
+                    //clock.getFrameNumber = function() { return this.frameNumber }
+                }
+                clock.start();
+                //animating = true;
+                requestAnimationFrame(doFrame);
+            //}
+        }
+        
+        function stopAnimation() {
+            //if (animating) {
+            clock = null;
+              //animating = false;
+            //}
+            requestAnimationFrame(render);
+        }
+        render();
+        
+
+
+        </script> 
+    </body> 
+</html>
