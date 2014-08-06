@@ -5,7 +5,7 @@ var Constant = {
   hiddenOpacity: 0.08,
   fullOpacity: 1.0,
   probOfLow: 0.5,
-  probOfSuck: 0,
+  probOfSuck: 0.09,
   suck: 0,
   addThisTile: {0: 2, 1: 4},
   numDirections: 6,
