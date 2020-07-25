@@ -124,8 +124,8 @@
     </style>
     
     <div id='infoButton'>?</div>
-    <div id='animateButtonOff'>A</div>
-    <div id='animateButtonOn' style='display: none;'>A</div>
+    <div id='animateButtonOff' style='display: none;'>A</div>
+    <div id='animateButtonOn' >A</div>
 
     <div id='infoPopup' style='display: none;'>
       <b>Arrow keys</b>: move cubes up, down, left, and right.<br>
@@ -168,7 +168,7 @@
         var camera = new THREE.PerspectiveCamera(Constant.fov, width/height, Constant.nearPlane, Constant.farPlane);        
         var renderer = new THREE.WebGLRenderer();
         
-        var animateEver = false;
+        var animateEver = true;
         
         //scene.add(camera);
         renderer.setSize(window.innerWidth, window.innerHeight);
